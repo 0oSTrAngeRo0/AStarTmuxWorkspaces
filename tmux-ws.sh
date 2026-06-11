@@ -165,6 +165,7 @@ cmd_load() {
         layout*)
             cur_layout=$(echo "$line" | cut -d' ' -f2-)
             ;;
+        pane-base-index*) continue ;;
         pane*)
             local p_idx p_cwd p_cmd
             p_idx=$(echo "$line" | awk '{print $2}')
