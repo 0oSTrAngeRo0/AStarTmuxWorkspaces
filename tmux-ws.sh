@@ -67,7 +67,9 @@ cmd_save() {
             echo "layout $w_layout"
 
             while IFS='|' read -r p_idx p_path p_start p_cur; do
-                if [ -z "$p_start" ] || is_shell "$p_cur"; then
+                if [ -z "$p_start" ] && ! is_shell "$p_cur"; then
+                    echo "pane $p_idx $p_path $p_cur"
+                elif [ -z "$p_start" ] || is_shell "$p_cur"; then
                     echo "pane $p_idx $p_path"
                 else
                     echo "pane $p_idx $p_path $(clean_cmd "$p_start")"
