@@ -5,7 +5,7 @@ VERSION="0.1.0"
 SCRIPT="tmux-ws.sh"
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
-SHELL_NAMES="bash zsh fish sh dash tcsh csh ksh mksh"
+SHELL_NAMES="bash zsh fish sh dash tcsh csh ksh mksh tmux"
 
 die() { echo "Error: $*" >&2; exit 1; }
 
@@ -24,12 +24,34 @@ resolve() {
 }
 
 is_shell() {
-    local c="$1"
+    local c
+    c=$(basename "$1")
     for s in $SHELL_NAMES; do [ "$c" = "$s" ] && return 0; done
     return 1
 }
 
 clean_cmd() { sed 's/^"//;s/"$//' <<< "$1"; }
+
+lookup_app() {
+    local ppid="$1" depth="${2:-0}"
+    [ "$depth" -gt 3 ] && return 1
+    local child_pid child_comm found
+    for child_pid in $(ps -o pid= --ppid "$ppid" 2>/dev/null); do
+        [ -z "$child_pid" ] && continue
+        child_comm=$(ps -o comm= -p "$child_pid" 2>/dev/null)
+        [ -z "$child_comm" ] && continue
+        is_shell "$child_comm" && continue
+        [ "$child_comm" = "tmux" ] && continue
+        echo "$child_comm"
+        return 0
+    done
+    for child_pid in $(ps -o pid= --ppid "$ppid" 2>/dev/null); do
+        [ -z "$child_pid" ] && continue
+        found=$(lookup_app "$child_pid" $((depth + 1)))
+        [ -n "$found" ] && { echo "$found"; return 0; }
+    done
+    return 1
+}
 
 # ── save ─────────────────────────────────────────────────────────────────────
 
@@ -66,16 +88,25 @@ cmd_save() {
             echo "window $w_idx $w_name$aflag"
             echo "layout $w_layout"
 
-            while IFS='|' read -r p_idx p_path p_start p_cur; do
-                if [ -z "$p_start" ] && ! is_shell "$p_cur"; then
-                    echo "pane $p_idx $p_path $p_cur"
-                elif [ -z "$p_start" ] || is_shell "$p_cur"; then
-                    echo "pane $p_idx $p_path"
+            while IFS='|' read -r p_idx p_path p_start p_cur p_pid; do
+                local pane_cmd=""
+                if [ -n "$p_start" ]; then
+                    local cleaned
+                    cleaned=$(clean_cmd "$p_start")
+                    is_shell "$cleaned" || pane_cmd="$cleaned"
+                elif [ "$p_cur" = "tmux" ]; then
+                    pane_cmd=$(lookup_app "$p_pid")
+                elif ! is_shell "$p_cur"; then
+                    pane_cmd="$p_cur"
+                fi
+
+                if [ -n "$pane_cmd" ]; then
+                    echo "pane $p_idx $p_path $pane_cmd"
                 else
-                    echo "pane $p_idx $p_path $(clean_cmd "$p_start")"
+                    echo "pane $p_idx $p_path"
                 fi
             done < <(tmux list-panes -t ":$w_idx" \
-                -F '#{pane_index}|#{pane_current_path}|#{pane_start_command}|#{pane_current_command}')
+                -F '#{pane_index}|#{pane_current_path}|#{pane_start_command}|#{pane_current_command}|#{pane_pid}')
         done < <(tmux list-windows \
             -F '#{window_index}|#{window_name}|#{window_layout}|#{window_active}')
     } > "$file"
@@ -133,24 +164,29 @@ cmd_load() {
             cur_layout=$(echo "$line" | cut -d' ' -f2-)
             ;;
         pane*)
-            local p_cwd p_cmd
+            local p_idx p_cwd p_cmd
+            p_idx=$(echo "$line" | awk '{print $2}')
             p_cwd=$(echo "$line" | awk '{print $3}')
             p_cmd=$(echo "$line" | awk '{for(i=4;i<=NF;i++) printf "%s%s", $i, (i==NF?"":" ")}')
             pane_n=$((pane_n + 1))
 
             if [ $is_first -eq 1 ] && [ $pane_n -eq 1 ]; then
                 cur_win=$(tmux new-session -d -P -F '#{window_id}' \
-                    -s "$session" -n "$cur_name" -c "$p_cwd" $p_cmd)
+                    -s "$session" -n "$cur_name" -c "$p_cwd")
                 tmux set-option -t "$session" pane-base-index "$pane_base"
                 [ "$cur_active" = "active" ] && active_win="$cur_win"
             elif [ $is_first -eq 1 ]; then
-                tmux split-window -t "$cur_win" -v -c "$p_cwd" $p_cmd
+                tmux split-window -d -t "$cur_win" -v -c "$p_cwd"
             elif [ $pane_n -eq 1 ]; then
                 cur_win=$(tmux new-window -d -P -F '#{window_id}' \
-                    -t "$session:" -n "$cur_name" -c "$p_cwd" $p_cmd)
+                    -t "$session:" -n "$cur_name" -c "$p_cwd")
                 [ "$cur_active" = "active" ] && active_win="$cur_win"
             else
-                tmux split-window -t "$cur_win" -v -c "$p_cwd" $p_cmd
+                tmux split-window -d -t "$cur_win" -v -c "$p_cwd"
+            fi
+
+            if [ -n "$p_cmd" ]; then
+                tmux send-keys -t "$cur_win.$p_idx" "$p_cmd" Enter
             fi
 
             [ $is_first -eq 1 ] && [ $pane_n -eq 1 ] && is_first=0
