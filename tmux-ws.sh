@@ -167,29 +167,24 @@ cmd_load() {
             ;;
         pane-base-index*) continue ;;
         pane*)
-            local p_idx p_cwd p_cmd
-            p_idx=$(echo "$line" | awk '{print $2}')
+            local p_cwd p_cmd
             p_cwd=$(echo "$line" | awk '{print $3}')
             p_cmd=$(echo "$line" | awk '{for(i=4;i<=NF;i++) printf "%s%s", $i, (i==NF?"":" ")}')
             pane_n=$((pane_n + 1))
 
             if [ $is_first -eq 1 ] && [ $pane_n -eq 1 ]; then
                 cur_win=$(tmux new-session -d -P -F '#{window_id}' \
-                    -s "$session" -n "$cur_name" -c "$p_cwd")
+                    -s "$session" -n "$cur_name" -c "$p_cwd" $p_cmd)
                 tmux set-option -t "$session" pane-base-index "$pane_base"
                 [ "$cur_active" = "active" ] && active_win="$cur_win"
             elif [ $is_first -eq 1 ]; then
-                tmux split-window -d -t "$cur_win" -v -c "$p_cwd"
+                tmux split-window -t "$cur_win" -v -c "$p_cwd" $p_cmd
             elif [ $pane_n -eq 1 ]; then
                 cur_win=$(tmux new-window -d -P -F '#{window_id}' \
-                    -t "$session:" -n "$cur_name" -c "$p_cwd")
+                    -t "$session:" -n "$cur_name" -c "$p_cwd" $p_cmd)
                 [ "$cur_active" = "active" ] && active_win="$cur_win"
             else
-                tmux split-window -d -t "$cur_win" -v -c "$p_cwd"
-            fi
-
-            if [ -n "$p_cmd" ]; then
-                tmux send-keys -t "$cur_win.$p_idx" "$p_cmd" Enter
+                tmux split-window -t "$cur_win" -v -c "$p_cwd" $p_cmd
             fi
 
             [ $is_first -eq 1 ] && [ $pane_n -eq 1 ] && is_first=0
