@@ -140,7 +140,9 @@ cmd_load() {
         echo "Session '$session' already exists."
         read -r -p "(a)ttach or (s)kip? [a/s] " choice
         case "$choice" in
-            a|A|attach) tmux attach -t "$session"; exit 0;;
+            a|A|attach)
+                    [ -n "${TMUX:-}" ] && tmux switch-client -t "$session" || tmux attach -t "$session"
+                    exit 0;;
             *) echo "To attach later:  tmux attach -t $session"; exit 0;;
         esac
     fi
@@ -200,7 +202,11 @@ cmd_load() {
 
     [ -n "$active_win" ] && tmux select-window -t "$active_win"
 
-    tmux attach -t "$session"
+    if [ -n "${TMUX:-}" ]; then
+        tmux switch-client -t "$session"
+    else
+        tmux attach -t "$session"
+    fi
 }
 
 # ── list ─────────────────────────────────────────────────────────────────────
