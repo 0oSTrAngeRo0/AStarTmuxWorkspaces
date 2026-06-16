@@ -1,0 +1,8 @@
+tmux-ws-storage/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+*.backup.*
+*.tar.gz

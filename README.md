@@ -10,15 +10,20 @@ A lightweight tmux workspace manager. Save and restore tmux session layouts keye
 
 ## Installation
 
+Clone the repository and run the setup script:
+
 ```bash
-curl -O https://raw.githubusercontent.com/<user>/tmux-ws/main/tmux-ws.sh
-chmod +x tmux-ws.sh
+git clone https://github.com/AStarTmuxWorkspaces.git
+cd AStarTmuxWorkspaces
+./setup.sh
 ```
 
-Optionally, symlink or move it into your `$PATH`:
+This adds convenient aliases to your `~/.bashrc`. After setup, run `source ~/.bashrc` or open a new terminal.
+
+To remove the aliases:
 
 ```bash
-ln -s "$(pwd)/tmux-ws.sh" ~/.local/bin/tmux-ws
+./setup.sh uninstall
 ```
 
 ## Usage
@@ -48,6 +53,15 @@ If `[directory]` is omitted, the current working directory is used.
 | *(default)* | `tmux-ws-storage/` next to the script |
 
 Priority: `--store-dir` > `$TMUX_WS_DIR` > default.
+
+### Storage Management
+
+Use `storage.sh` to export and import workspace data:
+
+```bash
+./storage.sh export             # creates tmux-ws-storage-YYYYMMDDHHMMSS.tar.gz
+./storage.sh import <file>      # restore from an archive
+```
 
 ## Examples
 

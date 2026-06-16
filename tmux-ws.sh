@@ -132,7 +132,7 @@ cmd_load() {
 
     [ -f "$file" ] || die "no workspace for $abs (looked: $file)"
 
-    session=$(grep '^session ' "$file" | head -1 | awk '{print $2}')
+    session="$abs"
     local pane_base; pane_base=$(grep '^pane-base-index ' "$file" | head -1 | awk '{print $2}')
     pane_base="${pane_base:-0}"
 
