@@ -1,29 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-STORE_DIR="${TMUX_WS_STORE_DIR:-$SCRIPT_DIR/tmux-ws-storage}"
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/utils.sh"
 
 cmd_export() {
-    local outfile="${1:-tmux-ws-storage-$(date +%Y%m%d%H%M%S).tar.gz}"
+    local outfile
+    outfile="${1:-storage-$(date +%Y%m%d%H%M%S).tar.gz}"
 
     if [ ! -d "$STORE_DIR" ] || [ -z "$(ls -A "$STORE_DIR" 2>/dev/null)" ]; then
         echo "No workspace data to export."
         exit 0
     fi
 
-    tar -czf "$outfile" -C "$SCRIPT_DIR" "$(basename "$STORE_DIR")"
+    tar -czf "$outfile" -C "$(dirname "$STORE_DIR")" "$(basename "$STORE_DIR")"
     echo "Exported: $outfile"
 }
 
 cmd_import() {
-    local infile="${1:-}"
+    local infile
+    infile="${1:-}"
 
     if [ -z "$infile" ]; then
         local latest
-        latest=$(ls -t tmux-ws-storage-*.tar.gz 2>/dev/null | head -1)
+        latest=$(ls -t storage-*.tar.gz 2>/dev/null | head -1)
         if [ -z "$latest" ]; then
-            echo "No archive found. Usage: $(basename "$0") import <file.tar.gz>"
+            echo "No archive found. Usage: $SCRIPT import <file.tar.gz>"
             exit 1
         fi
         infile="$latest"
@@ -37,26 +38,26 @@ cmd_import() {
     if [ -d "$STORE_DIR" ] && [ -n "$(ls -A "$STORE_DIR" 2>/dev/null)" ]; then
         local ts backup
         ts=$(date +%Y%m%d%H%M%S)
-        backup="tmux-ws-storage.backup.$ts"
+        backup="storage.backup.$ts"
         mv "$STORE_DIR" "$backup"
         echo "Existing storage backed up: $backup"
     fi
 
     mkdir -p "$(dirname "$STORE_DIR")"
-    tar -xzf "$infile" -C "$SCRIPT_DIR"
+    tar -xzf "$infile" -C "$(dirname "$STORE_DIR")"
     echo "Imported from: $infile"
 }
 
-case "${1:-}" in
-    export|e) cmd_export "${2:-}";;
-    import|i) cmd_import "${2:-}";;
-    help|-h|--help)
-        echo "Usage: $(basename "$0") <command> [file]"
-        echo "  export [file]  Export workspace data to a tar.gz archive"
-        echo "  import [file]  Import workspace data from a tar.gz archive"
-        ;;
-    *)
-        echo "Usage: $(basename "$0") {export|import} [file]"
-        exit 1
-        ;;
-esac
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    case "${1:-}" in
+        export|e) cmd_export "${2:-}";;
+        import|i) cmd_import "${2:-}";;
+        help|-h|--help)
+            echo "Usage: $(basename "$0") {export|import} [file]"
+            ;;
+        *)
+            echo "Usage: $(basename "$0") {export|import} [file]"
+            exit 1
+            ;;
+    esac
+fi
