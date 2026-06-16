@@ -9,10 +9,9 @@ cmd_list() {
     local count=0
     for f in "$STORE_DIR"/*; do
         [ -f "$f" ] || continue
-        local s p
-        s=$(grep '^session ' "$f" | head -1 | awk '{print $2}')
+        local p
         p=$(grep '^path ' "$f" | head -1 | awk '{$1=""; print substr($0,2)}')
-        printf "%-20s %s\n" "$s" "$p"
+        printf "%s\n" "$p"
         count=$((count + 1))
     done
     [ "$count" -eq 0 ] && echo "(empty)"
