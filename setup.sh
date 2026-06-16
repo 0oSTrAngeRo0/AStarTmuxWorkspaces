@@ -17,26 +17,65 @@ backup_bashrc() {
 }
 
 cmd_install() {
-    backup_bashrc
+    local do_backup=""
 
-    local line="alias tws='$SCRIPT_DIR/tmux-workspaces.sh'  $MARKER"
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --backup)    do_backup="yes"; shift;;
+            --no-backup) do_backup="no"; shift;;
+            *)           die "unknown option for install: $1";;
+        esac
+    done
+
+    if [ -z "$do_backup" ]; then
+        read -r -p "Backup ~/.bashrc before making changes? [y/N] " answer
+        case "$answer" in
+            [yY]|[yY][eE][sS]) do_backup="yes";;
+            *)                 do_backup="no";;
+        esac
+    fi
+
+    if [ "$do_backup" = "yes" ]; then
+        backup_bashrc
+    fi
 
     sed -i "/$MARKER/d" "$BASHRC" 2>/dev/null || true
     touch "$BASHRC"
 
-    echo "$line" >> "$BASHRC"
+    echo "alias tmux-workspaces='$SCRIPT_DIR/tmux-workspaces.sh'  $MARKER" >> "$BASHRC"
+    echo "alias tws='tmux-workspaces'                            $MARKER" >> "$BASHRC"
 
-    echo "Alias added to $BASHRC"
-    echo "Run 'source ~/.bashrc' or open a new terminal to use it."
+    echo "Aliases added to $BASHRC"
+    echo "Run 'source ~/.bashrc' or open a new terminal to use them."
 }
 
 cmd_uninstall() {
+    local do_backup=""
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --backup)    do_backup="yes"; shift;;
+            --no-backup) do_backup="no"; shift;;
+            *)           die "unknown option for uninstall: $1";;
+        esac
+    done
+
     if ! grep -q "$MARKER" "$BASHRC" 2>/dev/null; then
         echo "No $SCRIPT aliases found in $BASHRC"
         exit 0
     fi
 
-    backup_bashrc
+    if [ -z "$do_backup" ]; then
+        read -r -p "Backup ~/.bashrc before making changes? [y/N] " answer
+        case "$answer" in
+            [yY]|[yY][eE][sS]) do_backup="yes";;
+            *)                 do_backup="no";;
+        esac
+    fi
+
+    if [ "$do_backup" = "yes" ]; then
+        backup_bashrc
+    fi
     sed -i "/$MARKER/d" "$BASHRC"
 
     echo "Aliases removed from $BASHRC"
@@ -45,11 +84,11 @@ cmd_uninstall() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     case "${1:-}" in
-        install|setup) cmd_install;;
-        uninstall|remove) cmd_uninstall;;
+        install|setup)    shift; cmd_install "$@";;
+        uninstall|remove) shift; cmd_uninstall "$@";;
         help|-h|--help)
-            echo "Usage: $(basename "$0") {install|uninstall}"
+            echo "Usage: $(basename "$0") {install|uninstall} [--backup|--no-backup]"
             ;;
-        *) cmd_install;;
+        *) cmd_install "$@";;
     esac
 fi

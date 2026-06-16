@@ -72,8 +72,8 @@ case "$cmd" in
     load|l)             cmd_load "$@";;
     list|ls)            cmd_list "$@";;
     delete|rm|d|del)    cmd_delete "$@";;
-    install|setup)      cmd_install;;
-    uninstall|remove)   cmd_uninstall;;
+    install|setup)      cmd_install "$@";;
+    uninstall|remove)   cmd_uninstall "$@";;
     export|e)           cmd_export "$@";;
     import|i)           cmd_import "$@";;
     help|h|-h|--help)   cmd_help;;
