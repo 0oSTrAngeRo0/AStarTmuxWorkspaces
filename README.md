@@ -1,6 +1,28 @@
-# tmux-ws
+# tmux-workspaces
 
-A lightweight tmux workspace manager. Save and restore tmux session layouts keyed by directory path — windows, panes, splits, working directories, and running commands are all preserved.
+A lightweight tmux workspace manager. Save and restore tmux session layouts keyed by directory path —
+windows, panes, splits, working directories, and running commands are all preserved.
+
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+## Features
+
+- **Save & Load** — capture the full tmux session layout (windows, panes, splits, cwd, commands)
+- **Directory-keyed** — workspaces are identified by hashed directory path, no manual naming
+- **Shell aliases** — built-in install sets up `tmux-workspaces` and `tws` aliases
+- **Export & Import** — tar.gz backup and restore for all workspace data
+- **Custom storage** — override the storage directory via CLI option or environment variable
+
+## Quick Start
+
+```bash
+git clone https://github.com/0oSTrAngeRo0/AStarTmuxWorkspaces.git
+cd AStarTmuxWorkspaces
+./tmux-workspaces.sh install --no-backup
+source ~/.bashrc
+tws save
+```
 
 ## Requirements
 
@@ -10,79 +32,82 @@ A lightweight tmux workspace manager. Save and restore tmux session layouts keye
 
 ## Installation
 
-Clone the repository and run the setup script:
-
 ```bash
-git clone https://github.com/AStarTmuxWorkspaces.git
+git clone https://github.com/0oSTrAngeRo0/AStarTmuxWorkspaces.git
 cd AStarTmuxWorkspaces
-./setup.sh
+./tmux-workspaces.sh install
 ```
 
-This adds convenient aliases to your `~/.bashrc`. After setup, run `source ~/.bashrc` or open a new terminal.
+This adds `tmux-workspaces` and `tws` aliases to your `~/.bashrc`. Run `source ~/.bashrc` or open a new terminal to use them.
 
-To remove the aliases:
+Options:
+- `--backup` — back up `~/.bashrc` before modifying
+- `--no-backup` — skip the backup prompt
 
-```bash
-./setup.sh uninstall
-```
+To remove the aliases, run `tws uninstall`.
 
-## Usage
+## Command Reference
 
-```
-tmux-ws.sh <command> [--store-dir <dir>] [directory]
-```
+| Command    | Aliases          | Description                              |
+|------------|------------------|------------------------------------------|
+| `save`     | `s`              | Save the current tmux session layout     |
+| `load`     | `l`              | Restore a previously saved workspace     |
+| `list`     | `ls`             | List all saved workspaces                |
+| `delete`   | `rm`, `d`, `del` | Delete a saved workspace                 |
+| `install`  | `setup`          | Add aliases to `~/.bashrc`               |
+| `uninstall`| `remove`         | Remove aliases from `~/.bashrc`          |
+| `export`   | `e`              | Export workspace data to a tar.gz file   |
+| `import`   | `i`              | Import workspace data from a tar.gz file |
+| `help`     | `h`, `-h`, `--help` | Show usage information              |
 
-If `[directory]` is omitted, the current working directory is used.
+All commands accept an optional directory argument (defaults to current working directory).
 
-### Commands
+## Configuration
 
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `save` | `s` | Save the current tmux session layout for a directory |
-| `load` | `l` | Restore a previously saved workspace |
-| `list` | `ls` | List all saved workspaces |
-| `delete` | `rm`, `d`, `del` | Delete a saved workspace |
-| `help` | `h`, `-h`, `--help` | Show usage information |
-
-### Configuration
-
-| Method | Description |
-|--------|-------------|
-| `--store-dir <path>` | Per-command override for the storage directory |
-| `TMUX_WS_DIR` | Environment variable for a persistent custom storage directory |
-| *(default)* | `tmux-ws-storage/` next to the script |
+| Method                    | Description                                   |
+|---------------------------|-----------------------------------------------|
+| `--store-dir <path>`      | Per-command override for the storage directory |
+| `TMUX_WS_DIR`             | Environment variable for a persistent custom storage directory |
+| *(default)*               | `storage/` next to the script                 |
 
 Priority: `--store-dir` > `$TMUX_WS_DIR` > default.
-
-### Storage Management
-
-Use `storage.sh` to export and import workspace data:
-
-```bash
-./storage.sh export             # creates tmux-ws-storage-YYYYMMDDHHMMSS.tar.gz
-./storage.sh import <file>      # restore from an archive
-```
 
 ## Examples
 
 ```bash
 # Save the current session for the working directory
-tmux-ws.sh save
+tws save
 
 # Save with an explicit path
-tmux-ws.sh save ~/projects/myapp
+tws save ~/projects/myapp
 
 # List all saved workspaces
-tmux-ws.sh list
+tws list
 
 # Restore a workspace
-tmux-ws.sh load ~/projects/myapp
+tws load ~/projects/myapp
 
 # Use a custom storage directory
-tmux-ws.sh --store-dir ~/.tmux-workspaces save
+tws --store-dir ~/.tmux-workspaces save
 
 # Delete a workspace
-tmux-ws.sh delete ~/projects/myapp
+tws delete ~/projects/myapp
+
+# Export all workspace data
+tws export
+
+# Import from a backup
+tws import ~/backup.tar.gz
+```
+
+## Storage Management
+
+Export and import workspace data directly through the main script:
+
+```bash
+tws export                        # creates storage-YYYYMMDDHHMMSS.tar.gz
+tws import                        # imports the latest archive found
+tws import ~/backup.tar.gz        # imports a specific archive
 ```
 
 ## How It Works
@@ -99,4 +124,4 @@ On **load**, the script recreates the session by issuing `tmux new-session`, `tm
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)
