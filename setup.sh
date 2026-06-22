@@ -23,6 +23,10 @@ cmd_install() {
         case "$1" in
             --backup)    do_backup="yes"; shift;;
             --no-backup) do_backup="no"; shift;;
+            -h|--help)
+                echo "Usage: $SCRIPT install [--backup|--no-backup]"
+                echo "  Add $SCRIPT aliases to ~/.bashrc"
+                return 0;;
             *)           die "unknown option for install: $1";;
         esac
     done
@@ -56,6 +60,10 @@ cmd_uninstall() {
         case "$1" in
             --backup)    do_backup="yes"; shift;;
             --no-backup) do_backup="no"; shift;;
+            -h|--help)
+                echo "Usage: $SCRIPT uninstall [--backup|--no-backup]"
+                echo "  Remove $SCRIPT aliases from ~/.bashrc"
+                return 0;;
             *)           die "unknown option for uninstall: $1";;
         esac
     done

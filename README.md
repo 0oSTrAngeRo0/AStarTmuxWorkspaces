@@ -68,9 +68,20 @@ All commands accept an optional directory argument (defaults to current working 
 |---------------------------|-----------------------------------------------|
 | `--store-dir <path>`      | Per-command override for the storage directory |
 | `TMUX_WS_DIR`             | Environment variable for a persistent custom storage directory |
+| `--debug`                 | Enable debug logging for the current command (also settable via `TMUX_WS_LOG=1`) |
 | *(default)*               | `storage/` next to the script                 |
 
 Priority: `--store-dir` > `$TMUX_WS_DIR` > default.
+
+## Debugging
+
+Pass `--debug` or set `TMUX_WS_LOG=1` to enable detailed execution traces:
+
+```bash
+tws --debug load ~/projects/myapp
+```
+
+Logs are written to `~/.local/state/tmux-ws/load-YYYYMMDD-HHMMSS.log` (respects `$XDG_STATE_HOME`). The log captures every pane command issued, window and session creation steps, and layout application — useful for troubleshooting why a workspace didn't restore as expected.
 
 ## Examples
 
@@ -118,7 +129,8 @@ On **save**, the script captures:
 - Session name
 - Window names, indices, and layout strings
 - Per-pane: working directory, start command, and current command
-- Shell panes (bash, zsh, etc.) are saved without a command so they spawn a fresh shell on restore
+- Shell panes (bash, zsh, etc.) are saved without a start command so they spawn a fresh shell on restore
+- Foreground applications (e.g., nvim, htop) are detected via process-tree inspection and saved with their full command line
 
 On **load**, the script recreates the session by issuing `tmux new-session`, `tmux split-window`, `tmux new-window`, `tmux select-layout`, and `tmux select-window` commands, then attaches to the restored session.
 

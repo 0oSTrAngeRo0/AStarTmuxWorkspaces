@@ -4,6 +4,11 @@ set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/utils.sh"
 
 cmd_export() {
+    if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+        echo "Usage: $SCRIPT export [file]"
+        echo "  Export workspace data to a tar.gz archive"
+        return 0
+    fi
     local outfile
     outfile="${1:-storage-$(date +%Y%m%d%H%M%S).tar.gz}"
 
@@ -17,6 +22,11 @@ cmd_export() {
 }
 
 cmd_import() {
+    if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+        echo "Usage: $SCRIPT import [file]"
+        echo "  Import workspace data from a tar.gz archive"
+        return 0
+    fi
     local infile
     infile="${1:-}"
 

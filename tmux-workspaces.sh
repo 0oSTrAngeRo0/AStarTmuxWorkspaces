@@ -52,6 +52,7 @@ Commands:
 Options:
   --store-dir <dir>   Storage directory (default: $SCRIPT_DIR/storage,
                         env: \$TMUX_WS_DIR)
+  --debug             Enable debug logging (env: \$TMUX_WS_LOG)
 
 If [dir] is omitted, current working directory is used.
 
