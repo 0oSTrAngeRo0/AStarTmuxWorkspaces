@@ -5,6 +5,7 @@ VERSION="0.2.0"
 
 SD="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 source "$SD/utils.sh"
+source "$SD/log.sh"
 source "$SD/save.sh"
 source "$SD/load.sh"
 source "$SD/list.sh"
@@ -14,10 +15,13 @@ source "$SD/storage.sh"
 while [ $# -gt 0 ]; do
     case "$1" in
         --store-dir) ARG_STORE_DIR="$2"; shift 2;;
+        --debug)     TMUX_WS_LOG=1; shift;;
         -*) die "unknown option: $1";;
         *)  break;;
     esac
 done
+
+export TMUX_WS_LOG="${TMUX_WS_LOG:-}"
 
 if [ -n "${ARG_STORE_DIR:-}" ]; then
     STORE_DIR="$ARG_STORE_DIR"
