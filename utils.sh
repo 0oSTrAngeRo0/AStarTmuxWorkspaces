@@ -36,7 +36,7 @@ lookup_app() {
         [ -z "$child_comm" ] && continue
         is_shell "$child_comm" && continue
         [ "$child_comm" = "tmux" ] && continue
-        echo "$child_comm"
+        echo "$child_pid:$child_comm"
         return 0
     done
     for child_pid in $(ps -o pid= --ppid "$ppid" 2>/dev/null); do
