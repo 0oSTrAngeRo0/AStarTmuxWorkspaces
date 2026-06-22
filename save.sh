@@ -35,10 +35,19 @@ cmd_save() {
                     local cleaned
                     cleaned=$(clean_cmd "$p_start")
                     is_shell "$cleaned" || pane_cmd="$cleaned"
-                elif [ "$p_cur" = "tmux" ]; then
-                    pane_cmd=$(lookup_app "$p_pid")
-                elif ! is_shell "$p_cur"; then
-                    pane_cmd="$p_cur"
+                fi
+
+                if [ -z "$pane_cmd" ]; then
+                    local app_info app_pid app_comm
+                    app_info=$(lookup_app "$p_pid" 2>/dev/null || true)
+                    if [ -n "$app_info" ]; then
+                        app_pid="${app_info%%:*}"
+                        app_comm="${app_info##*:}"
+                        pane_cmd=$(tr '\0' ' ' < "/proc/$app_pid/cmdline" 2>/dev/null || true)
+                        [ -z "$pane_cmd" ] && pane_cmd="$app_comm"
+                    elif ! is_shell "$p_cur"; then
+                        pane_cmd="$p_cur"
+                    fi
                 fi
 
                 if [ -n "$pane_cmd" ]; then
